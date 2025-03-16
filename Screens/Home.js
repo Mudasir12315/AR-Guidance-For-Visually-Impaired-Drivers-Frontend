@@ -19,6 +19,7 @@ const Home = ({navigation,route}) => {
             <Text style={styles.heading}>AR Guidance App</Text>
             <TouchableOpacity style={styles.btn} onPress={() => {
                     console.log("Simple Mode selected")
+                    navigation.navigate('simplemode',user)
                 }
             }>
                 <Text style={{ alignSelf: 'center', fontWeight: '900', fontSize: 30, marginTop: 5 }}>Simple Mode</Text>

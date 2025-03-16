@@ -15,6 +15,7 @@ import Icon from "react-native-vector-icons/MaterialIcons";
 import {View} from 'react-native'
 import Account from "./Account";
 import ChangePassword from "./ChangePassword";
+import SimpleMode from "./SimpleMode";
 
 
 const TabNav = ({route}) => {
@@ -77,6 +78,7 @@ const Start=()=>{
                 <Stack.Screen name="question2" component={Question2} options={{headerShown:false}}></Stack.Screen>
                 <Stack.Screen name="question3" component={Question3} options={{headerShown:false}}></Stack.Screen>
                 <Stack.Screen name="changepassword" component={ChangePassword} options={{headerShown:false}}></Stack.Screen>
+                <Stack.Screen name="simplemode" component={SimpleMode} options={{headerShown:false}}></Stack.Screen>
                 <Stack.Screen name="tab" component={TabNav} options={{headerShown:false}}></Stack.Screen>             
             </Stack.Navigator>
         </NavigationContainer>

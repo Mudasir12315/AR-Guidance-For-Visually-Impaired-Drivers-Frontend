@@ -1,79 +1,63 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# AR Guidance for Partially Visually Impaired Drivers
 
-# Getting Started
+Welcome to **AR Guidance for Partially Visually Impaired Drivers**, a pioneering final-year project designed to empower drivers with partial visual impairments through innovative augmented reality (AR) technology. This application assists individuals with **peripheral vision issues**, **distance vision problems**, and **color blindness**, enabling safer and more confident driving experiences with real-time visual and voice-based guidance.
 
->**Note**: Make sure you have completed the [React Native - Environment Setup](https://reactnative.dev/docs/environment-setup) instructions till "Creating a new application" step, before proceeding.
+## Project Overview
 
-## Step 1: Start the Metro Server
+Driving with partial visual impairments can be challenging and risky. This project leverages cutting-edge AR technology to provide real-time assistance, acting as a **Heads-Up Display (HUD)** for drivers, complemented by **voice alerts** to minimize the need to glance at the phone. By offering tailored support based on the user's specific impairment, the app enhances road safety and accessibility.
 
-First, you will need to start **Metro**, the JavaScript _bundler_ that ships _with_ React Native.
+### Key Features
+- **User Onboarding**: Users create an account and answer three simple questions regarding their visual impairments (peripheral vision, distance vision, or color blindness).
+- **Dual Modes**:
+  - **Simple Mode**: A minimalist interface delivering basic guidance and voice alerts.
+  - **AR Mode**: An immersive HUD experience with real-time AR overlays and synchronized voice notifications for navigation and hazard detection.
+- **Voice Alerts**: Real-time audio cues ensure drivers stay informed without diverting their attention from the road.
+- **Personalized Assistance**: Guidance adapts to the user’s specific visual impairment for a seamless driving experience.
+- **Frontend Built with React Native**: A responsive and user-friendly mobile interface.
 
-To start Metro, run the following command from the _root_ of your React Native project:
+## How It Works
+1. **Account Creation**: Sign up to get started.
+2. **Impairment Assessment**: Answer three quick questions about your vision (peripheral, distance, or color perception).
+3. **Home Screen**: Choose between Simple Mode or AR Mode based on your preference.
+4. **Real-Time Guidance**: Drive with confidence as the app provides live AR visuals and voice alerts tailored to your needs, keeping your focus on the road.
 
-```bash
-# using npm
-npm start
+## Tech Stack
+- **Frontend**: React Native  
+  - A cross-platform mobile app delivering a smooth and intuitive user experience with integrated voice alert functionality.
+- **Backend**: [Backend Repository](https://github.com/Mudasir12315/YOLO_FYP.git)  
+  - Handles user data, authentication, and real-time processing (see the backend repo for more details).
 
-# OR using Yarn
-yarn start
-```
+## Installation & Setup
+To run the frontend locally:
+1. Clone this repository:
+   ```bash
+   git clone https://github.com/Mudasir12315/MAP_Project.git
+   ```
+2. Navigate to the project directory:
+   ```bash
+   cd your-repo-name
+   ```
+3. Install dependencies:
+   ```bash
+   npm install
+   ```
+4. Start the app:
+   ```bash
+   npx react-native run-android
+   ```
+   *(Ensure you have a compatible emulator or device connected.)*
 
-## Step 2: Start your Application
+## Backend Repository
+For the server-side logic, authentication, and real-time data processing, check out the backend code here:  
+[**Backend Repository Link**](https://github.com/Mudasir12315/YOLO_FYP.git)
 
-Let Metro Bundler run in its _own_ terminal. Open a _new_ terminal from the _root_ of your React Native project. Run the following command to start your _Android_ or _iOS_ app:
+## Future Enhancements
+- Integration with vehicle sensors for enhanced accuracy.
+- Voice command support for hands-free operation and interaction.
+- Multi-language support for voice alerts to broaden accessibility.
 
-### For Android
+## Why This Project Matters
+This project bridges the gap between technology and accessibility, offering a practical solution for partially visually impaired drivers. By combining AR with personalized guidance and voice alerts, it promotes independence and safety on the road, reducing reliance on visual input alone.
 
-```bash
-# using npm
-npm run android
-
-# OR using Yarn
-yarn android
-```
-
-### For iOS
-
-```bash
-# using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
-```
-
-If everything is set up _correctly_, you should see your new app running in your _Android Emulator_ or _iOS Simulator_ shortly provided you have set up your emulator/simulator correctly.
-
-This is one way to run your app — you can also run it directly from within Android Studio and Xcode respectively.
-
-## Step 3: Modifying your App
-
-Now that you have successfully run the app, let's modify it.
-
-1. Open `App.tsx` in your text editor of choice and edit some lines.
-2. For **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Developer Menu** (<kbd>Ctrl</kbd> + <kbd>M</kbd> (on Window and Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (on macOS)) to see your changes!
-
-   For **iOS**: Hit <kbd>Cmd ⌘</kbd> + <kbd>R</kbd> in your iOS Simulator to reload the app and see your changes!
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [Introduction to React Native](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you can't get this to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+## License
+This project is licensed under the [MIT License](LICENSE) – feel free to use, modify, and distribute it as needed.
