@@ -1,113 +1,142 @@
-import React, { useState } from "react";
-import { Button, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import React, { useEffect, useRef } from "react";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Camera } from 'react-native-vision-camera';
 import Orientation from 'react-native-orientation-locker';
 import { useFocusEffect } from '@react-navigation/native';
 
 const SimpleMode = ({ navigation, route }) => {
     const user = route.params;
-    const [selectedImage, setSelectedImage] = useState(null);
-    const [signboardText, setSignboardText] = useState('');
-    const [trafficLightColor, setTrafficLightColor] = useState('white');
-    const [trafficLightMsg, setTrafficLightMsg] = useState('');
-    const [LeftTurnOrRightTurn, setLeftTurnOrRightTurn] = useState('straight');
-    const [carOnLeftSideOrRightSide, setCarOnLeftSideOrRightSide] = useState('neutral');
+    const [speedText, setSpeedText] = React.useState('');
+    const [signboardText, setSignboardText] = React.useState('');
+    const [trafficLightColor, setTrafficLightColor] = React.useState('white');
+    const [trafficLightMsg, setTrafficLightMsg] = React.useState('');
+    const [LeftTurnOrRightTurn, setLeftTurnOrRightTurn] = React.useState('straight');
+    const [carOnLeftSideOrRightSide, setCarOnLeftSideOrRightSide] = React.useState('neutral');
+    const captureInterval = useRef(null);
+    const cameraRef = useRef(null); // Ref for the camera
 
     console.log("---------Simple Mode screen-----------");
     console.log(user);
 
-    // Use useFocusEffect to handle orientation changes
+    const [device, setDevice] = React.useState(null);
+
+    useEffect(() => {
+        const getDevices = async () => {
+            const devices = await Camera.getAvailableCameraDevices();
+            if (devices.length > 0) {
+                setDevice(devices[0]); // Set the first available camera
+            } else {
+                console.log("No available camera devices");
+            }
+        };
+        getDevices();
+    }, []);
+
+
     useFocusEffect(
         React.useCallback(() => {
-            console.log("Locking to landscape mode"); // Debugging
+            console.log("Locking to landscape mode");
             Orientation.lockToLandscape();
 
+            // Start capturing images every 30 seconds
+            captureInterval.current = setInterval(captureFrame, 1000);
+            captureFrame(); // Capture first frame immediately
+
             return () => {
-                console.log("Resetting to portrait mode"); // Debugging
-                Orientation.lockToPortrait(); // Reset to portrait mode
+                console.log("Resetting to portrait mode");
+                Orientation.lockToPortrait();
+                clearInterval(captureInterval.current);
             };
         }, [])
     );
 
-    // Function to pick an image from the gallery
-    const pickImageFromGallery = () => {
-        let options = { mediaType: 'photo', quality: 1 };
-        launchImageLibrary(options, response => {
-            if (response.assets && response.assets.length > 0) {
-                const newImageUri = response.assets[0].uri;
-                setSelectedImage(newImageUri); // Update the state
-                sendFramesToBaackend(newImageUri); // Pass the new image URI directly
+    // Function to capture a frame silently from the camera
+    const captureFrame = async () => {
+        if (cameraRef.current) {
+            try {
+                const photo = await cameraRef.current.takePhoto({
+                    qualityPrioritization: 'speed', // Prioritize speed over quality
+                    flash: 'off', // No flash
+                    enableShutterSound: false, // Silent capture
+                });
+                const imageUri = `file://${photo.path}`;
+                sendFramesToBackend(imageUri); // Send to backend
+            } catch (error) {
+                console.log("Error capturing frame:", error);
             }
-        });
+        }
     };
 
-    const sendFramesToBaackend = async (imageUri) => {
+    // Function to send frames to the backend
+    const sendFramesToBackend = async (imageUri) => {
         try {
             let formData = new FormData();
             formData.append('file', {
                 uri: imageUri,
                 type: 'image/jpeg',
-                name: 'upload.jpg'
+                name: 'upload.jpg',
             });
             formData.append('user_id', user.userID);
             formData.append('camera_mode', 0);
+
             console.log("Sending request to the server...");
             let response = await fetch(`${url}/frontend/frames/detection`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'multipart/form-data'
+                    'Content-Type': 'multipart/form-data',
                 },
                 body: formData,
             });
 
-            if (response.status == 201) {
+            if (response.status === 201) {
                 response = await response.json();
                 setTrafficLightColor('white');
                 setTrafficLightMsg('');
                 setLeftTurnOrRightTurn('straight');
                 setCarOnLeftSideOrRightSide('neutral');
-                setSignboardText('');
-                console.log("Response from server");
-                console.log("Inside 201 Color:");
-                console.log(response.detected_objects.length);
+                setSpeedText('')
+
+                console.log("Response from server:", response.detected_objects);
                 for (let i = 0; i < response.detected_objects.length; i++) {
-                    if (response.detected_objects[i].detected_object === 'red') {
+                    const obj = response.detected_objects[i].detected_object;
+                    if (obj === 'red') {
                         setTrafficLightColor('red');
                         setTrafficLightMsg('Stop');
-                    }
-                    else if (response.detected_objects[i].detected_object === 'yellow') {
+                    } else if (obj === 'yellow') {
                         setTrafficLightColor('yellow');
                         setTrafficLightMsg('Ready');
-                    } else if (response.detected_objects[i].detected_object === 'green') {
+                    } else if (obj === 'green') {
                         setTrafficLightColor('green');
                         setTrafficLightMsg('Go');
                     }
-                    if (response.detected_objects[i].detected_object === 'left') {
+                    if (obj === 'left') {
                         setLeftTurnOrRightTurn('left');
-                    } else if (response.detected_objects[0].detected_object === 'right') {
+                    } else if (obj === 'right') {
                         setLeftTurnOrRightTurn('right');
                     }
-                    if (response.detected_objects[i].detected_object === 'car') {
-                        if (response.camera_mode === '0')
-                            setCarOnLeftSideOrRightSide('left');
-                        else
-                            setCarOnLeftSideOrRightSide('right');
+                    if (obj === 'car' || obj === 'bike' || obj === 'bus' || obj === 'truck') {
+                        setCarOnLeftSideOrRightSide(response.camera_mode === '0' ? 'left' : 'right');
                     }
-                    if (response.detected_objects[0].detected_object === 'textsignboard') {
-                        setSignboardText(response.detected_objects[0].text);
+                    if (obj === 'textsignboard' || obj === 'stop') {
+                        setTimeout(() => {
+                            setSignboardText(response.detected_objects[i].text);
+                        }, 5000);
+                    }
+                    if (obj === 'speed') {
+                        setSpeedText(response.detected_objects[i].text);
                     }
                 }
             } else {
-                response = await response.json();
-                console.log("Else block");
+                console.log("Server returned non-201 status:", response.status);
                 setTrafficLightColor('white');
                 setTrafficLightMsg('');
                 setLeftTurnOrRightTurn('straight');
                 setCarOnLeftSideOrRightSide('neutral');
                 setSignboardText('');
+                setSpeedText('')
             }
         } catch (error) {
-            console.log(error.message);
+            console.log("Error sending frame to backend:", error.message);
         }
     };
 
@@ -124,38 +153,76 @@ const SimpleMode = ({ navigation, route }) => {
                 <Text style={styles.heading}>Simple Mode</Text>
             </View>
 
-            {/* Image Picker Section */}
-            <TouchableOpacity onPress={pickImageFromGallery} style={styles.img}>
-                <View style={styles.imageContainer}>
-                    <Image source={{ uri: selectedImage }} style={{ width: '100%', height: '100%', resizeMode: 'stretch' }} />
-                    {/* Simple AR Area */}
-                    <View style={styles.row}>
-                        {/* Traffic Light Area */}
-                        <View style={{ flexDirection: 'column',marginRight:100 }}>
-                            {trafficLightColor === 'white' && <Image source={require('../Images/white.png')} style={{ width: 70, height: 60 }} resizeMode="stretch"></Image>}
-                            {trafficLightColor === 'red' && <Image source={require('../Images/red.png')} style={{ width: 70, height: 60 }} resizeMode="stretch"></Image>}
-                            {trafficLightColor === 'yellow' && <Image source={require('../Images/yellow.png')} style={{ width: 70, height: 60 }} resizeMode="stretch"></Image>}
-                            {trafficLightColor === 'green' && <Image source={require('../Images/green.png')} style={{ width: 70, height: 60 }} resizeMode="stretch"></Image>}
-                            <Text style={{ color: 'white',marginLeft:20}}>{trafficLightMsg}</Text>
-                        </View>
-                        {/* Left Side car Area */}
-                        {carOnLeftSideOrRightSide === 'left' && <Image source={require('../Images/red_circle.png')} style={{ width: 50, height: 50 }} resizeMode="stretch"></Image>}
-                        {carOnLeftSideOrRightSide === 'right' && <Image source={require('../Images/fade_circle.png')} style={{ width: 50, height: 50 }} resizeMode="stretch"></Image>}
-                        {carOnLeftSideOrRightSide === 'neutral' && <Image source={require('../Images/fade_circle.png')} style={{ width: 50, height: 50 }} resizeMode="stretch"></Image>}
-                        {/* Car Area */}
-                        <Image source={require('../Images/car.png')} style={{ width: 100, height: 100 }} resizeMode="stretch"></Image>
-                        {/* Right Side Car Area */}
-                        {carOnLeftSideOrRightSide === 'right' && <Image source={require('../Images/red_circle.png')} style={{ width: 50, height: 50 }} resizeMode="stretch"></Image>}
-                        {carOnLeftSideOrRightSide === 'left' && <Image source={require('../Images/fade_circle.png')} style={{ width: 50, height: 50 }} resizeMode="stretch"></Image>}
-                        {carOnLeftSideOrRightSide === 'neutral' && <Image source={require('../Images/fade_circle.png')} style={{ width: 50, height: 50 }} resizeMode="stretch"></Image>}
-                        {/* Turn Left or right Area */}
-                        {LeftTurnOrRightTurn === 'left' && <Image source={require('../Images/turn_left.png')} style={{ width: 50, height: 50,marginLeft:40 }} resizeMode="stretch"></Image>}
-                        {LeftTurnOrRightTurn === 'right' && <Image source={require('../Images/turn_right.png')} style={{ width: 50, height: 50,marginLeft:40 }} resizeMode="stretch"></Image>}
-                        {/* Textboard Area */}
-                        <Text style={{ color: 'white',width:'35%',marginLeft:40}}>{signboardText}</Text>
+            {/* Camera Feed and AR Display */}
+            <View style={styles.img}>
+                {device && (
+                    <Camera
+                        ref={cameraRef}
+                        style={{ width: '100%', height: '100%' }}
+                        device={device}
+                        isActive={true}
+                        photo={true}
+                    />
+                )}
+
+                {/* AR Overlay */}
+                <View style={styles.row}>
+                    {/* Traffic Light Area */}
+                    <View style={{ flexDirection: 'column', marginTop: 25 }}>
+                        {trafficLightColor === 'white' && (
+                            <Image source={require('../Images/white.png')} style={{ width: 70, height: 60 }} resizeMode="stretch" />
+                        )}
+                        {trafficLightColor === 'red' && (
+                            <Image source={require('../Images/red.png')} style={{ width: 70, height: 60 }} resizeMode="stretch" />
+                        )}
+                        {trafficLightColor === 'yellow' && (
+                            <Image source={require('../Images/yellow.png')} style={{ width: 70, height: 60 }} resizeMode="stretch" />
+                        )}
+                        {trafficLightColor === 'green' && (
+                            <Image source={require('../Images/green.png')} style={{ width: 70, height: 60 }} resizeMode="stretch" />
+                        )}
+                        <Text style={{ color: 'white', marginLeft: 20 }}>{trafficLightMsg}</Text>
                     </View>
+                    {/* Speed Area */}
+                    {true && (
+                        <View style={styles.speedText} >
+                            <Text style={{ color: 'white', textAlign: 'center' }}>{speedText}</Text>
+                        </View>
+                    )}
+
+                    {/* Left Side Car Area */}
+                    {carOnLeftSideOrRightSide === 'left' && (
+                        <Image source={require('../Images/red_circle.png')} style={{ width: 50, height: 50 }} resizeMode="stretch" />
+                    )}
+                    {carOnLeftSideOrRightSide === 'right' && (
+                        <Image source={require('../Images/fade_circle.png')} style={{ width: 50, height: 50 }} resizeMode="stretch" />
+                    )}
+                    {carOnLeftSideOrRightSide === 'neutral' && (
+                        <Image source={require('../Images/fade_circle.png')} style={{ width: 50, height: 50 }} resizeMode="stretch" />
+                    )}
+                    {/* Car Area */}
+                    <Image source={require('../Images/car.png')} style={{ width: 100, height: 100 }} resizeMode="stretch" />
+                    {/* Right Side Car Area */}
+                    {carOnLeftSideOrRightSide === 'right' && (
+                        <Image source={require('../Images/red_circle.png')} style={{ width: 50, height: 50 }} resizeMode="stretch" />
+                    )}
+                    {carOnLeftSideOrRightSide === 'left' && (
+                        <Image source={require('../Images/fade_circle.png')} style={{ width: 50, height: 50 }} resizeMode="stretch" />
+                    )}
+                    {carOnLeftSideOrRightSide === 'neutral' && (
+                        <Image source={require('../Images/fade_circle.png')} style={{ width: 50, height: 50 }} resizeMode="stretch" />
+                    )}
+                    {/* Turn Left or Right Area */}
+                    {LeftTurnOrRightTurn === 'left' && (
+                        <Image source={require('../Images/turn_left.png')} style={{ width: 50, height: 50, marginLeft: 10, marginRight: 10, }} resizeMode="stretch" />
+                    )}
+                    {LeftTurnOrRightTurn === 'right' && (
+                        <Image source={require('../Images/turn_right.png')} style={{ width: 50, height: 50, marginLeft: 10, marginRight: 10, }} resizeMode="stretch" />
+                    )}
+                    {/* Textboard Area */}
+                    <Text style={{ color: 'white', width: '35%' }}>{signboardText}</Text>
                 </View>
-            </TouchableOpacity>
+            </View>
         </View>
     );
 };
@@ -164,36 +231,47 @@ const styles = StyleSheet.create({
     header: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center', // Center the content horizontally
+        justifyContent: 'center',
+    },
+    speedText: {
+        width: 70,
+        height: 70,
+        borderRadius: 35,
+        borderColor: 'white',
+        borderWidth: 3,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginLeft: 10,
+        marginRight: 10,
     },
     heading: {
         color: 'white',
         marginTop: 10,
         fontSize: 25,
         fontWeight: '900',
-        flex: 1, // Take up remaining space
-        textAlign: 'center', // Center the text within its container
+        flex: 1,
+        textAlign: 'center',
     },
     img: {
         width: '90%',
         height: '85%',
         backgroundColor: 'white',
-        alignSelf: 'center'
-    },
-    imageContainer: {
-        flex: 1,
-        position: 'relative', // Make the container relative for absolute positioning
+        alignSelf: 'center',
+        position: 'relative',
     },
     row: {
-        position: 'absolute', // Position the AR area absolutely
-        bottom: 10, // Adjust this value to position the AR area
-        left: 20, // Adjust this value to position the AR area
+        position: 'absolute',
+        bottom: 10,
+        left: 20,
         flexDirection: 'row',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
         padding: 10,
         borderRadius: 10,
-        width:'95%'
-    }
+        width: '95%',
+        height: 100,
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
 });
 
 export default SimpleMode;
