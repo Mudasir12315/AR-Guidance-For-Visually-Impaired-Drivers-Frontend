@@ -1,4 +1,4 @@
-# AR Guidance for Partially Visually Impaired Drivers
+# AR Guidance For Visually Impaired Drivers
 
 Welcome to **AR Guidance for Partially Visually Impaired Drivers**, a pioneering final-year project designed to empower drivers with partial visual impairments through innovative augmented reality (AR) technology. This application assists individuals with **peripheral vision issues**, **distance vision problems**, and **color blindness**, enabling safer and more confident driving experiences with real-time visual and voice-based guidance.
 
