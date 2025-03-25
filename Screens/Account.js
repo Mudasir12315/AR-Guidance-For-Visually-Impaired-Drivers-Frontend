@@ -39,13 +39,7 @@ const Account = ({ navigation,route }) => {
             <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
                 <View style={{ marginLeft: 10, marginRight: 10 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        <TouchableOpacity onPress={() => navigation.goBack()}>
-                            <Image
-                                source={require('../Images/backarrow.png')}
-                                style={{ width: 20, height: 20, marginRight: 10, marginTop: 30, marginLeft: 10 }}
-                            />
-                        </TouchableOpacity>
-                        <Text style={styles.heading}>Account</Text>
+                    <Text style={[styles.heading, { alignSelf: 'center' }]}>Account</Text>
                     </View>
 
                     <Image
@@ -92,7 +86,9 @@ const styles = StyleSheet.create({
         marginTop: 30,
         fontSize: 25,
         fontWeight: '900',
-        marginLeft: 90
+        textAlign: 'center',
+        alignSelf: 'center',
+        width: '100%',
     },
     btn: {
         marginLeft: 30,

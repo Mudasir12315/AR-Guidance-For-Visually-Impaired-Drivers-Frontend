@@ -24,7 +24,7 @@ Driving with partial visual impairments can be challenging and risky. This proje
 ## Tech Stack
 - **Frontend**: React Native  
   - A cross-platform mobile app delivering a smooth and intuitive user experience with integrated voice alert functionality.
-- **Backend**: [Backend Repository](https://github.com/Mudasir12315/YOLO_FYP.git)  
+- **Backend**: [Backend Repository](https://github.com/Mudasir12315/AR-Guidance-For-Visually-Impaired-Drivers-Backend.git)  
   - Handles user data, authentication, and real-time processing (see the backend repo for more details).
 
 ## Installation & Setup
