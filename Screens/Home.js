@@ -26,6 +26,7 @@ const Home = ({navigation,route}) => {
             </TouchableOpacity>
             <TouchableOpacity style={styles.btn} onPress={() => {
                     console.log("AR Mode selected")
+                    navigation.navigate('armode',user)
                 }
             }>
                 <Text style={{ alignSelf: 'center', fontWeight: '900', fontSize: 30, marginTop: 5 }}>AR Mode</Text>

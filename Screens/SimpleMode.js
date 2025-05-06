@@ -19,19 +19,35 @@ const SimpleMode = ({ navigation, route }) => {
     console.log(user);
 
     const [device, setDevice] = React.useState(null);
+    const [hasPermission, setHasPermission] = React.useState(false); // Track permission status
 
     useEffect(() => {
-        const getDevices = async () => {
-            const devices = await Camera.getAvailableCameraDevices();
-            if (devices.length > 0) {
-                setDevice(devices[0]); // Set the first available camera
-            } else {
-                console.log("No available camera devices");
+        const checkAndRequestPermission = async () => {
+            try {
+                const permissionStatus = await Camera.getCameraPermissionStatus();
+                if (permissionStatus === 'granted') {
+                    setHasPermission(true);
+                } else {
+                    const newPermission = await Camera.requestCameraPermission();
+                    setHasPermission(newPermission === 'granted');
+                }
+
+                // If permission is granted, initialize the camera
+                if (hasPermission) {
+                    const devices = Camera.getAvailableCameraDevices();
+                    if (devices.length > 0) {
+                        setDevice(devices[0]); // Set the first available camera
+                    } else {
+                        console.log("No available camera devices");
+                    }
+                }
+            } catch (error) {
+                console.log("Error checking/requesting permission:", error);
             }
         };
-        getDevices();
-    }, []);
 
+        checkAndRequestPermission();
+    }, [hasPermission]);
 
     useFocusEffect(
         React.useCallback(() => {
@@ -94,7 +110,7 @@ const SimpleMode = ({ navigation, route }) => {
                 setTrafficLightMsg('');
                 setLeftTurnOrRightTurn('straight');
                 setCarOnLeftSideOrRightSide('neutral');
-                setSpeedText('')
+                setSpeedText('');
 
                 console.log("Response from server:", response.detected_objects);
                 for (let i = 0; i < response.detected_objects.length; i++) {
@@ -133,7 +149,7 @@ const SimpleMode = ({ navigation, route }) => {
                 setLeftTurnOrRightTurn('straight');
                 setCarOnLeftSideOrRightSide('neutral');
                 setSignboardText('');
-                setSpeedText('')
+                setSpeedText('');
             }
         } catch (error) {
             console.log("Error sending frame to backend:", error.message);
@@ -155,7 +171,7 @@ const SimpleMode = ({ navigation, route }) => {
 
             {/* Camera Feed and AR Display */}
             <View style={styles.img}>
-                {device && (
+                {hasPermission && device && (
                     <Camera
                         ref={cameraRef}
                         style={{ width: '100%', height: '100%' }}
@@ -185,7 +201,7 @@ const SimpleMode = ({ navigation, route }) => {
                     </View>
                     {/* Speed Area */}
                     {true && (
-                        <View style={styles.speedText} >
+                        <View style={styles.speedText}>
                             <Text style={{ color: 'white', textAlign: 'center' }}>{speedText}</Text>
                         </View>
                     )}
@@ -214,10 +230,10 @@ const SimpleMode = ({ navigation, route }) => {
                     )}
                     {/* Turn Left or Right Area */}
                     {LeftTurnOrRightTurn === 'left' && (
-                        <Image source={require('../Images/turn_left.png')} style={{ width: 50, height: 50, marginLeft: 10, marginRight: 10, }} resizeMode="stretch" />
+                        <Image source={require('../Images/turn_left.png')} style={{ width: 50, height: 50, marginLeft: 10, marginRight: 10 }} resizeMode="stretch" />
                     )}
                     {LeftTurnOrRightTurn === 'right' && (
-                        <Image source={require('../Images/turn_right.png')} style={{ width: 50, height: 50, marginLeft: 10, marginRight: 10, }} resizeMode="stretch" />
+                        <Image source={require('../Images/turn_right.png')} style={{ width: 50, height: 50, marginLeft: 10, marginRight: 10 }} resizeMode="stretch" />
                     )}
                     {/* Textboard Area */}
                     <Text style={{ color: 'white', width: '35%' }}>{signboardText}</Text>
@@ -270,7 +286,7 @@ const styles = StyleSheet.create({
         width: '95%',
         height: 100,
         justifyContent: 'center',
-        alignItems: 'center'
+        alignItems: 'center',
     },
 });
 

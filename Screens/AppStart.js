@@ -18,6 +18,7 @@ import ChangePassword from "./ChangePassword";
 import SimpleMode from "./SimpleMode";
 import UserLog from "./UserLog";
 import Notifications from "./Notifications";
+import ARMode from "./ARMode";
 
 const TabNav = ({ route }) => {
     const { userID } = route.params || {};
@@ -125,6 +126,7 @@ const Start = () => {
                 <Stack.Screen name="question3" component={Question3} options={{ headerShown: false }} />
                 <Stack.Screen name="changepassword" component={ChangePassword} options={{ headerShown: false }} />
                 <Stack.Screen name="simplemode" component={SimpleMode} options={{ headerShown: false }} />
+                <Stack.Screen name="armode" component={ARMode} options={{ headerShown: false }} />
                 <Stack.Screen name="tab" component={TabNav} options={{ headerShown: false }} />
             </Stack.Navigator>
         </NavigationContainer>

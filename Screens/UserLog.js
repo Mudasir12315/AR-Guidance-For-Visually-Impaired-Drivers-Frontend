@@ -23,7 +23,6 @@ const UserLog = ({ route }) => {
                 console.error("Error connecting to server", error);
             }
         };
-
         fetchData();
     }, []);
 
@@ -39,7 +38,7 @@ const UserLog = ({ route }) => {
                         <Text style={styles.boldText}>Alert:</Text> {item.alert}
                     </Text>
                     <Text style={styles.logText}>
-                        <Text style={styles.boldText}>Distance:</Text> {item.distance} m
+                        <Text style={styles.boldText}>Distance:</Text> {item.distance.toFixed(2)} m
                     </Text>
                 </View>
                 <Image
@@ -101,9 +100,10 @@ const styles = StyleSheet.create({
     },
     dateTimeText: {
         color: "white",
-        fontSize: 16,
+        fontSize: 14,
         marginBottom: 5,
-        fontWeight: "900"
+        fontWeight: "900",
+        paddingLeft:5
     },
     logContainer: {
         backgroundColor: "#D9D9D9",
