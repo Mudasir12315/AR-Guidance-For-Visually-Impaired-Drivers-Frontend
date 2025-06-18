@@ -2,9 +2,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Orientation from 'react-native-orientation-locker';
 import { useFocusEffect } from '@react-navigation/native';
-import Tts from 'react-native-tts';
 
-const ARMode = ({ navigation, route }) => {
+const TestCodeARMode = ({ navigation, route }) => {
     const user = route.params;
     const [hudState, setHudState] = useState({
         speedText: '',
@@ -16,9 +15,7 @@ const ARMode = ({ navigation, route }) => {
         showSpeedArea: false,
     });
     const captureInterval = useRef(null);
-    const [showLeftIndicator, setShowLeftIndicator] = useState(true);
-    const [showRightIndicator, setShowRightIndicator] = useState(true);
-
+    const [isSpeakerOn, setIsSpeakerOn] = useState(true);
 
     console.log("---------AR Mode screen-----------");
     console.log(user);
@@ -35,29 +32,6 @@ const ARMode = ({ navigation, route }) => {
             };
         }, [])
     );
-
-    //to add blinking effect when car is on left side or right side
-    useEffect(() => {
-        let blinkInterval;
-
-        if (hudState.carOnLeftSideOrRightSide === 'left') {
-            blinkInterval = setInterval(() => {
-                setShowLeftIndicator(prev => !prev);
-            }, 500);
-        } else if (hudState.carOnLeftSideOrRightSide === 'right') {
-            blinkInterval = setInterval(() => {
-                setShowRightIndicator(prev => !prev);
-            }, 500);
-        }
-
-        return () => {
-            clearInterval(blinkInterval);
-            setShowLeftIndicator(true);
-            setShowRightIndicator(true);
-        };
-    }, [hudState.carOnLeftSideOrRightSide]);
-
-
 
     useEffect(() => {
         const GetHUDLog = async () => {
@@ -116,7 +90,7 @@ const ARMode = ({ navigation, route }) => {
                     }
 
                     if (obj === 'car' || obj === 'bike' || obj === 'bus' || obj === 'truck') {
-                        newState.carOnLeftSideOrRightSide = message.camera_mode === 0 ? 'left' : 'right';
+                        newState.carOnLeftSideOrRightSide = message.camera_mode === '0' ? 'left' : 'right';
                     }
 
                     if (obj === 'textsignboard' || obj === 'stop') {
@@ -130,34 +104,6 @@ const ARMode = ({ navigation, route }) => {
                     }
 
                     setHudState(newState);
-                    // Voice feedback logic
-    if (obj === 'red') {
-        Tts.stop();
-        Tts.speak('Stop');
-    } else if (obj === 'yellow') {
-        Tts.stop();
-        Tts.speak('Get ready');
-    } else if (obj === 'green') {
-        Tts.stop();
-        Tts.speak('Go');
-    } else if (obj === 'textsignboard' || obj === 'stop') {
-        if (message.alert) {
-            Tts.stop();
-            Tts.speak(message.alert);
-        }
-    } else if (obj === 'car' || obj === 'bike' || obj === 'bus' || obj === 'truck') {
-        if (message.camera_mode === 0) {
-            Tts.stop();
-            Tts.speak('Car is on the left side');
-        } else if (message.camera_mode === 1) {
-            Tts.stop();
-            Tts.speak('Car is on the right side');
-        }
-    } else if (obj === 'speed' && message.alert) {
-        Tts.stop();
-        Tts.speak(`Car speed must be less than ${message.alert}`);
-    }
-
                     console.log("Updated HUD state:", newState);
                 } else {
                     console.log("Server returned non-200 status:", response.status);
@@ -177,26 +123,37 @@ const ARMode = ({ navigation, route }) => {
         };
 
         // Poll the API every 500ms
-        captureInterval.current = setInterval(GetHUDLog, 1500);
+        captureInterval.current = setInterval(GetHUDLog, 500);
 
         return () => clearInterval(captureInterval.current);
     }, [user.userID]);
 
     return (
         <View style={styles.container}>
-
             {/* Header Section */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()}>
                     <Image
                         source={require('../Images/backarrow.png')}
-                        style={{ width: 30, height: 20, marginLeft: 30, marginTop: 15 }}
+                        style={{ width: 20, height: 20, marginLeft: 10, marginTop: 10 }}
                     />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => {
+                    setIsSpeakerOn(prevState => !prevState);
+                }}>
+                    {isSpeakerOn && <Image
+                        source={require('../Images/sound.png')}
+                        style={{ width: 30, height: 30, marginRight: 30, marginTop: 10 }}
+                    />}
+                    {!isSpeakerOn && <Image
+                        source={require('../Images/speaker_off.png')}
+                        style={{ width: 30, height: 30, marginRight: 30, marginTop: 10 }}
+                    />}
                 </TouchableOpacity>
             </View>
 
             {/* Traffic Light Section */}
-            <View style={styles.trafficLightWrapper}>
+            <View style={styles.trafficLightContainer}>      
                 {hudState.trafficLightColor === 'red' && (
                     <Image source={require('../Images/red_1.png')} style={styles.trafficLightImage} resizeMode="stretch" />
                 )}
@@ -206,13 +163,14 @@ const ARMode = ({ navigation, route }) => {
                 {hudState.trafficLightColor === 'green' && (
                     <Image source={require('../Images/green_1.png')} style={styles.trafficLightImage} resizeMode="stretch" />
                 )}
+            </View>
+            <View style={styles.trafficLightMsgContainer}>
                 <Text style={styles.trafficLightText}>{hudState.trafficLightMsg}</Text>
             </View>
 
-
-            {/* Left Mirror Camera*/}
+            {/* Left Indicator */}
             <View style={styles.leftIndicatorContainer}>
-                {hudState.carOnLeftSideOrRightSide === 'left' && showLeftIndicator && (
+                {hudState.carOnLeftSideOrRightSide === 'left' && (
                     <Image
                         source={require('../Images/left_arrow_updated.png')}
                         style={styles.indicatorImage}
@@ -221,9 +179,9 @@ const ARMode = ({ navigation, route }) => {
                 )}
             </View>
 
-            {/* Right Mirror Camera*/}
+            {/* Right Indicator */}
             <View style={styles.rightIndicatorContainer}>
-                {hudState.carOnLeftSideOrRightSide === 'right' && showRightIndicator && (
+                {hudState.carOnLeftSideOrRightSide === 'right' && (
                     <Image
                         source={require('../Images/right_arrow_updated.png')}
                         style={styles.indicatorImage}
@@ -232,23 +190,8 @@ const ARMode = ({ navigation, route }) => {
                 )}
             </View>
 
-
             {/* Text Signboard Area */}
             <View style={styles.signboardContainer}>
-                {hudState.LeftTurnOrRightTurn === 'right' && (
-                    <Image
-                        source={require('../Images/turn_right.png')}
-                        style={styles.signboardImage}
-                        resizeMode="stretch"
-                    />
-                )}
-                {hudState.LeftTurnOrRightTurn === 'left' && (
-                    <Image
-                        source={require('../Images/turn_left.png')}
-                        style={styles.signboardImage}
-                        resizeMode="stretch"
-                    />
-                )}
                 <Text style={styles.signboardText}>{hudState.signboardText}</Text>
             </View>
 
@@ -285,25 +228,28 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         zIndex: 10,
     },
-    trafficLightWrapper: {
+    trafficLightContainer: {
         position: 'absolute',
         top: 50,
         right: 100,
         zIndex: 5,
-        alignItems: 'center',
     },
     trafficLightImage: {
-        width: 120,
-        height: 120,
+        width: 80,
+        height: 80,
+    },
+    trafficLightMsgContainer: {
+        position: 'absolute',
+        top: 130,
+        right: 40,
+        zIndex: 5,
     },
     trafficLightText: {
         color: 'white',
-        fontSize: 40,
+        fontSize: 16,
+        right: 80,
         textAlign: 'center',
-        fontWeight: '900',
-        marginTop: 5,
     },
-
     leftIndicatorContainer: {
         position: 'absolute',
         top: 160,
@@ -317,35 +263,22 @@ const styles = StyleSheet.create({
         zIndex: 5,
     },
     indicatorImage: {
-        width: 100,
-        height: 100,
+        width: 50,
+        height: 50,
     },
     signboardContainer: {
         position: 'absolute',
         top: '50%',
         left: '50%',
-        transform: [{ translateX: -175 }, { translateY: -75 }], // Half of width & height
-        width: 350,
-        height: 150, // Add height to help vertical centering
+        transform: [{ translateX: -100 }, { translateY: -20 }],
+        width: 200,
         zIndex: 5,
-        alignItems: 'center',     // Center children horizontally
-        justifyContent: 'center', // Center children vertically
-        backgroundColor: 'transparent', // Optional for debugging layout
     },
-
-    signboardImage: {
-        width: 100,
-        height: 100,
-        marginBottom: 5, // Space between image and text
-    },
-
     signboardText: {
         color: 'white',
-        fontSize: 40,
+        fontSize: 16,
         textAlign: 'center',
-        fontWeight: '900',
     },
-
     speedLimitContainer: {
         position: 'absolute',
         top: '50%',
@@ -356,9 +289,8 @@ const styles = StyleSheet.create({
     },
     speedLimitText: {
         color: 'white',
-        fontSize: 30,
+        fontSize: 16,
         textAlign: 'center',
-        fontWeight: '900'
     },
     speedAreaContainer: {
         position: 'absolute',
@@ -376,10 +308,9 @@ const styles = StyleSheet.create({
     },
     speedText: {
         color: 'white',
-        fontSize: 30,
+        fontSize: 16,
         textAlign: 'center',
-        fontWeight: '900'
     },
 });
 
-export default ARMode;
+export default TestCodeARMode;

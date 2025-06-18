@@ -24,7 +24,7 @@ const SimpleMode = ({ navigation, route }) => {
     useEffect(() => {
         const checkAndRequestPermission = async () => {
             try {
-                const permissionStatus = await Camera.getCameraPermissionStatus();
+                const permissionStatus = Camera.getCameraPermissionStatus();
                 if (permissionStatus === 'granted') {
                     setHasPermission(true);
                 } else {
@@ -98,9 +98,6 @@ const SimpleMode = ({ navigation, route }) => {
             console.log("Sending request to the server...");
             let response = await fetch(`${url}/frontend/frames/detection`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
                 body: formData,
             });
 
@@ -183,51 +180,24 @@ const SimpleMode = ({ navigation, route }) => {
 
                 {/* AR Overlay */}
                 <View style={styles.row}>
-                    {/* Traffic Light Area */}
-                    <View style={{ flexDirection: 'column', marginTop: 25 }}>
-                        {trafficLightColor === 'white' && (
-                            <Image source={require('../Images/white.png')} style={{ width: 70, height: 60 }} resizeMode="stretch" />
-                        )}
-                        {trafficLightColor === 'red' && (
-                            <Image source={require('../Images/red.png')} style={{ width: 70, height: 60 }} resizeMode="stretch" />
-                        )}
-                        {trafficLightColor === 'yellow' && (
-                            <Image source={require('../Images/yellow.png')} style={{ width: 70, height: 60 }} resizeMode="stretch" />
-                        )}
-                        {trafficLightColor === 'green' && (
-                            <Image source={require('../Images/green.png')} style={{ width: 70, height: 60 }} resizeMode="stretch" />
-                        )}
-                        <Text style={{ color: 'white', marginLeft: 20 }}>{trafficLightMsg}</Text>
-                    </View>
-                    {/* Speed Area */}
-                    {true && (
-                        <View style={styles.speedText}>
-                            <Text style={{ color: 'white', textAlign: 'center' }}>{speedText}</Text>
-                        </View>
-                    )}
 
                     {/* Left Side Car Area */}
                     {carOnLeftSideOrRightSide === 'left' && (
-                        <Image source={require('../Images/red_circle.png')} style={{ width: 50, height: 50 }} resizeMode="stretch" />
+                        <Image source={require('../Images/left_arrow_updated.png')} style={{ width: 50, height: 50 }} resizeMode="stretch" />
                     )}
-                    {carOnLeftSideOrRightSide === 'right' && (
-                        <Image source={require('../Images/fade_circle.png')} style={{ width: 50, height: 50 }} resizeMode="stretch" />
+
+                    {/* Traffic Light Area */}
+                    <View style={{ flexDirection: 'column', marginTop: 25 }}>
+                        <Text style={{ color: 'white', marginLeft: 20 }}>{trafficLightMsg}</Text>
+                    </View>
+
+                    {/* Speed Area */}
+                    {speedText && (
+                        <View style={styles.speedText}>
+                            <Text style={{ color: 'white', textAlign: 'center',fontWeight:'900' }}>{speedText}</Text>
+                        </View>
                     )}
-                    {carOnLeftSideOrRightSide === 'neutral' && (
-                        <Image source={require('../Images/fade_circle.png')} style={{ width: 50, height: 50 }} resizeMode="stretch" />
-                    )}
-                    {/* Car Area */}
-                    <Image source={require('../Images/car.png')} style={{ width: 100, height: 100 }} resizeMode="stretch" />
-                    {/* Right Side Car Area */}
-                    {carOnLeftSideOrRightSide === 'right' && (
-                        <Image source={require('../Images/red_circle.png')} style={{ width: 50, height: 50 }} resizeMode="stretch" />
-                    )}
-                    {carOnLeftSideOrRightSide === 'left' && (
-                        <Image source={require('../Images/fade_circle.png')} style={{ width: 50, height: 50 }} resizeMode="stretch" />
-                    )}
-                    {carOnLeftSideOrRightSide === 'neutral' && (
-                        <Image source={require('../Images/fade_circle.png')} style={{ width: 50, height: 50 }} resizeMode="stretch" />
-                    )}
+
                     {/* Turn Left or Right Area */}
                     {LeftTurnOrRightTurn === 'left' && (
                         <Image source={require('../Images/turn_left.png')} style={{ width: 50, height: 50, marginLeft: 10, marginRight: 10 }} resizeMode="stretch" />
@@ -237,6 +207,13 @@ const SimpleMode = ({ navigation, route }) => {
                     )}
                     {/* Textboard Area */}
                     <Text style={{ color: 'white', width: '35%' }}>{signboardText}</Text>
+
+
+                    {/* Right Side Car Area */}
+                    {carOnLeftSideOrRightSide === 'right' && (
+                        <Image source={require('../Images/right_arrow_updated.png')} style={{ width: 50, height: 50 }} resizeMode="stretch" />
+                    )}
+                    
                 </View>
             </View>
         </View>

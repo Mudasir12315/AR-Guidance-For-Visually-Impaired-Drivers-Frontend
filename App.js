@@ -1,6 +1,7 @@
 import React from 'react';
 import {Start} from './Screens/AppStart'
 import serverURL from './SensitiveData'
+import StartStack from './TestCodes/TestCode03StackNav'
 
 const App=()=>{
   global.url=serverURL
@@ -9,6 +10,7 @@ const App=()=>{
   
   return(
     <Start/>
+    // <StartStack/>
   );
 }
 export default App;

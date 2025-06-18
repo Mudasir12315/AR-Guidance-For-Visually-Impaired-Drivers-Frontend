@@ -11,7 +11,7 @@ const UserLog = ({ route }) => {
                 const response = await fetch(`${url}/user_log/${user.userID}`);
                 const data = await response.json();
                 if (response.ok) {
-                    const correctedLogs = data.message.map((log) => ({
+                    const correctedLogs = data.message.reverse().map((log) => ({
                         ...log,
                         img_path: log.img_path.replace("http://192.168.1.2:5000", url),
                     }));
