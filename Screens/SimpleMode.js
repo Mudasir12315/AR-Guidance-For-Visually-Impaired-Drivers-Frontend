@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Camera } from 'react-native-vision-camera';
 import Orientation from 'react-native-orientation-locker';
@@ -8,18 +8,21 @@ const SimpleMode = ({ navigation, route }) => {
     const user = route.params;
     const [speedText, setSpeedText] = React.useState('');
     const [signboardText, setSignboardText] = React.useState('');
-    const [trafficLightColor, setTrafficLightColor] = React.useState('white');
+    const [leftCamColor, setLeftCamColor] = React.useState('#868686');
+    const [rightCamColor, setRightCamColor] = React.useState('#868686');
+    const [frontCamColor, setfrontCamColor] = React.useState('#FFFFFF');
     const [trafficLightMsg, setTrafficLightMsg] = React.useState('');
     const [LeftTurnOrRightTurn, setLeftTurnOrRightTurn] = React.useState('straight');
     const [carOnLeftSideOrRightSide, setCarOnLeftSideOrRightSide] = React.useState('neutral');
     const captureInterval = useRef(null);
-    const cameraRef = useRef(null); // Ref for the camera
+    const cameraRef = useRef(null);
+    const[cameraMode,setCameraMode]=useState(2)
 
     console.log("---------Simple Mode screen-----------");
     console.log(user);
 
     const [device, setDevice] = React.useState(null);
-    const [hasPermission, setHasPermission] = React.useState(false); // Track permission status
+    const [hasPermission, setHasPermission] = React.useState(false);
 
     useEffect(() => {
         const checkAndRequestPermission = async () => {
@@ -93,7 +96,7 @@ const SimpleMode = ({ navigation, route }) => {
                 name: 'upload.jpg',
             });
             formData.append('user_id', user.userID);
-            formData.append('camera_mode', 0);
+            formData.append('camera_mode', cameraMode);
 
             console.log("Sending request to the server...");
             let response = await fetch(`${url}/frontend/frames/detection`, {
@@ -155,15 +158,51 @@ const SimpleMode = ({ navigation, route }) => {
 
     return (
         <View style={{ flex: 1, backgroundColor: '#102C57' }}>
+
             {/* Header Section */}
             <View style={styles.header}>
+                {/* Back Button*/}
                 <TouchableOpacity onPress={() => navigation.goBack()}>
                     <Image
                         source={require('../Images/backarrow.png')}
                         style={{ width: 20, height: 20, marginRight: 10, marginTop: 10, marginLeft: 10 }}
                     />
                 </TouchableOpacity>
+
+                {/* Simple Mode Text*/}
                 <Text style={styles.heading}>Simple Mode</Text>
+                {/* Front Mode Button*/}
+                <TouchableOpacity style={[styles.btn,{backgroundColor:frontCamColor}]} onPress={() => {
+                    setfrontCamColor('#FFFFFF')
+                    setLeftCamColor('#868686')
+                    setRightCamColor('#868686')
+                    setCameraMode(2)
+                }
+                }>
+                    <Text style={{ alignSelf: 'center', fontWeight: 900, fontSize: 15, marginTop: 5 }}>Front</Text>
+                </TouchableOpacity>
+
+                {/* Left Mode Button*/}
+                <TouchableOpacity style={[styles.btn,{backgroundColor:leftCamColor}]} onPress={() => {
+                    setfrontCamColor('#868686')
+                    setLeftCamColor('#FFFFFF')
+                    setRightCamColor('#868686')
+                    setCameraMode(0)
+                }
+                }>
+                    <Text style={{ alignSelf: 'center', fontWeight: 900, fontSize: 15, marginTop: 5 }}>Left</Text>
+                </TouchableOpacity>
+
+                {/* Right Mode Button*/}
+                <TouchableOpacity style={[styles.btn,{backgroundColor:rightCamColor}]} onPress={() => {
+                    setfrontCamColor('#868686')
+                    setLeftCamColor('#868686')
+                    setRightCamColor('#FFFFFF')
+                    setCameraMode(1)
+                }
+                }>
+                    <Text style={{ alignSelf: 'center', fontWeight: 900, fontSize: 15, marginTop: 5 }}>Right</Text>
+                </TouchableOpacity>
             </View>
 
             {/* Camera Feed and AR Display */}
@@ -194,7 +233,7 @@ const SimpleMode = ({ navigation, route }) => {
                     {/* Speed Area */}
                     {speedText && (
                         <View style={styles.speedText}>
-                            <Text style={{ color: 'white', textAlign: 'center',fontWeight:'900' }}>{speedText}</Text>
+                            <Text style={{ color: 'white', textAlign: 'center', fontWeight: '900' }}>{speedText}</Text>
                         </View>
                     )}
 
@@ -213,7 +252,7 @@ const SimpleMode = ({ navigation, route }) => {
                     {carOnLeftSideOrRightSide === 'right' && (
                         <Image source={require('../Images/right_arrow_updated.png')} style={{ width: 50, height: 50 }} resizeMode="stretch" />
                     )}
-                    
+
                 </View>
             </View>
         </View>
@@ -221,6 +260,14 @@ const SimpleMode = ({ navigation, route }) => {
 };
 
 const styles = StyleSheet.create({
+    btn: {
+        marginLeft: 15,
+        width: '20%',
+        height: 30,
+        alignSelf: 'center',
+        backgroundColor: '#DAC0A3',
+        borderRadius: 20,
+    },
     header: {
         flexDirection: 'row',
         alignItems: 'center',

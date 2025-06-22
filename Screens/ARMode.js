@@ -18,6 +18,7 @@ const ARMode = ({ navigation, route }) => {
     const captureInterval = useRef(null);
     const [showLeftIndicator, setShowLeftIndicator] = useState(true);
     const [showRightIndicator, setShowRightIndicator] = useState(true);
+    const previousSideRef = useRef('neutral'); //Track previous side
 
 
     console.log("---------AR Mode screen-----------");
@@ -36,131 +37,70 @@ const ARMode = ({ navigation, route }) => {
         }, [])
     );
 
-    //to add blinking effect when car is on left side or right side
-    useEffect(() => {
-        let blinkInterval;
+    
 
-        if (hudState.carOnLeftSideOrRightSide === 'left') {
-            blinkInterval = setInterval(() => {
-                setShowLeftIndicator(prev => !prev);
-            }, 500);
-        } else if (hudState.carOnLeftSideOrRightSide === 'right') {
+useEffect(() => {
+    let blinkInterval;
+
+    const currentSide = hudState.carOnLeftSideOrRightSide;
+
+    if (previousSideRef.current !== currentSide) {
+        // Clear any ongoing blink interval
+        clearInterval(blinkInterval);
+
+        console.log('Side changed from', previousSideRef.current, 'to', currentSide);
+        previousSideRef.current = currentSide;
+
+        // Reset both indicators before blinking
+        setShowLeftIndicator(true);
+        setShowRightIndicator(true);
+
+        if (currentSide === 'left') {
             blinkInterval = setInterval(() => {
                 setShowRightIndicator(prev => !prev);
             }, 500);
+        } else if (currentSide === 'right') {
+            blinkInterval = setInterval(() => {
+                setShowLeftIndicator(prev => !prev);
+            }, 500);
         }
-
-        return () => {
-            clearInterval(blinkInterval);
-            setShowLeftIndicator(true);
-            setShowRightIndicator(true);
-        };
-    }, [hudState.carOnLeftSideOrRightSide]);
-
-
-
-    useEffect(() => {
-        const GetHUDLog = async () => {
-            try {
-                console.log("Sending request to the server...");
-                let response = await fetch(`${url}/hud_log/${user.userID}`);
-
-                if (response.ok) {
-                    response = await response.json();
-                    console.log("Response from server:", response);
-
-                    if (response.message === "No data found") {
-                        console.log("No new logs available");
-                        setHudState({
-                            speedText: '',
-                            signboardText: '',
-                            trafficLightColor: 'white',
-                            trafficLightMsg: '',
-                            LeftTurnOrRightTurn: 'straight',
-                            carOnLeftSideOrRightSide: 'neutral',
-                            showSpeedArea: false,
-                        });
-                        return;
-                    }
-
-                    const message = response.message;
-                    console.log("Processing log:", message);
-
-                    const newState = {
-                        speedText: '',
-                        signboardText: '',
-                        trafficLightColor: 'white',
-                        trafficLightMsg: '',
-                        LeftTurnOrRightTurn: 'straight',
-                        carOnLeftSideOrRightSide: 'neutral',
-                        showSpeedArea: false,
-                    };
-
-                    const obj = message.detected_object;
-
-                    if (obj === 'red') {
-                        newState.trafficLightColor = 'red';
-                        newState.trafficLightMsg = 'Stop';
-                    } else if (obj === 'yellow') {
-                        newState.trafficLightColor = 'yellow';
-                        newState.trafficLightMsg = 'Ready';
-                    } else if (obj === 'green') {
-                        newState.trafficLightColor = 'green';
-                        newState.trafficLightMsg = 'Go';
-                    }
-
-                    if (obj === 'left') {
-                        newState.LeftTurnOrRightTurn = 'left';
-                    } else if (obj === 'right') {
-                        newState.LeftTurnOrRightTurn = 'right';
-                    }
-
-                    if (obj === 'car' || obj === 'bike' || obj === 'bus' || obj === 'truck') {
-                        newState.carOnLeftSideOrRightSide = message.camera_mode === 0 ? 'left' : 'right';
-                    }
-
-                    if (obj === 'textsignboard' || obj === 'stop') {
-                        newState.signboardText = message.alert;
-                    }
-
-                    if (obj === 'speed') {
-                        newState.showSpeedArea = true;
-                        newState.speedText = message.alert;
-                        console.log("Speed shown:", message.alert);
-                    }
-
-                    setHudState(newState);
-                    // Voice feedback logic
-    if (obj === 'red') {
-        Tts.stop();
-        Tts.speak('Stop');
-    } else if (obj === 'yellow') {
-        Tts.stop();
-        Tts.speak('Get ready');
-    } else if (obj === 'green') {
-        Tts.stop();
-        Tts.speak('Go');
-    } else if (obj === 'textsignboard' || obj === 'stop') {
-        if (message.alert) {
-            Tts.stop();
-            Tts.speak(message.alert);
-        }
-    } else if (obj === 'car' || obj === 'bike' || obj === 'bus' || obj === 'truck') {
-        if (message.camera_mode === 0) {
-            Tts.stop();
-            Tts.speak('Car is on the left side');
-        } else if (message.camera_mode === 1) {
-            Tts.stop();
-            Tts.speak('Car is on the right side');
-        }
-    } else if (obj === 'speed' && message.alert) {
-        Tts.stop();
-        Tts.speak(`Car speed must be less than ${message.alert}`);
     }
 
-                    console.log("Updated HUD state:", newState);
-                } else {
-                    console.log("Server returned non-200 status:", response.status);
+    return () => {
+        clearInterval(blinkInterval);
+    };
+}, [hudState.carOnLeftSideOrRightSide]);
+
+
+
+
+useEffect(() => {
+    let isSpeaking = false;
+    let ttsFinished = true;
+
+    const speakAndWait = (text) => {
+        return new Promise((resolve) => {
+            Tts.stop(); // stop any current speech
+            Tts.speak(text);
+            Tts.addEventListener('tts-finish', () => {
+                resolve();
+            });
+        });
+    };
+
+    const GetHUDLog = async () => {
+        if (!ttsFinished) return; // Don't fetch if previous speech isn't done
+
+        try {
+            console.log("Sending request to the server...");
+            let response = await fetch(`${url}/hud_log/${user.userID}`);
+
+            if (response.ok) {
+                response = await response.json();
+                console.log("Response from server:", response);
+
+                if (response.message === "No data found") {
+                    console.log("No new logs available");
                     setHudState({
                         speedText: '',
                         signboardText: '',
@@ -170,17 +110,100 @@ const ARMode = ({ navigation, route }) => {
                         carOnLeftSideOrRightSide: 'neutral',
                         showSpeedArea: false,
                     });
+                    return;
                 }
-            } catch (error) {
-                console.log("Error fetching data from backend:", error.message);
+
+                const message = response.message;
+                const obj = message.detected_object;
+
+                // Update HUD
+                const newState = {
+                    speedText: '',
+                    signboardText: '',
+                    trafficLightColor: 'white',
+                    trafficLightMsg: '',
+                    LeftTurnOrRightTurn: 'straight',
+                    carOnLeftSideOrRightSide: 'neutral',
+                    showSpeedArea: false,
+                };
+
+                if (obj === 'red') {
+                    newState.trafficLightColor = 'red';
+                    newState.trafficLightMsg = 'Stop';
+                } else if (obj === 'yellow') {
+                    newState.trafficLightColor = 'yellow';
+                    newState.trafficLightMsg = 'Ready';
+                } else if (obj === 'green') {
+                    newState.trafficLightColor = 'green';
+                    newState.trafficLightMsg = 'Go';
+                }
+
+                if (obj === 'left') newState.LeftTurnOrRightTurn = 'left';
+                else if (obj === 'right') newState.LeftTurnOrRightTurn = 'right';
+
+                if (['car', 'bike', 'bus', 'truck'].includes(obj)) {
+                    if(message.camera_mode === 0)
+                        newState.carOnLeftSideOrRightSide = 'left'
+                    else if(message.camera_mode === 1)
+                        newState.carOnLeftSideOrRightSide = 'right'
+                }
+
+                if (obj === 'textsignboard' || obj === 'stop') {
+                    newState.signboardText = message.alert;
+                }
+
+                if (obj === 'speed') {
+                    newState.showSpeedArea = true;
+                    newState.speedText = message.alert;
+                }
+
+                setHudState(newState);
+
+                // 🔊 Voice feedback
+                ttsFinished = false;
+
+                if (obj === 'red') {
+                    await speakAndWait('Stop');
+                } else if (obj === 'yellow') {
+                    await speakAndWait('Get ready');
+                } else if (obj === 'green') {
+                    await speakAndWait('Go');
+                } else if (obj === 'textsignboard' || obj === 'stop') {
+                    if (message.alert) await speakAndWait(message.alert);
+                } else if (['car', 'bike', 'bus', 'truck'].includes(obj)) {
+                    if (message.camera_mode === 0) await speakAndWait('Car is on the left side');
+                    else if (message.camera_mode === 1) await speakAndWait('Car is on the right side');
+                } else if (obj === 'speed' && message.alert) {
+                    await speakAndWait(`Speed limit ${message.alert}`);
+                }
+
+                ttsFinished = true;
+                console.log("Speech finished.");
+            } else {
+                console.log("Server returned non-200 status:", response.status);
+                setHudState({
+                    speedText: '',
+                    signboardText: '',
+                    trafficLightColor: 'white',
+                    trafficLightMsg: '',
+                    LeftTurnOrRightTurn: 'straight',
+                    carOnLeftSideOrRightSide: 'neutral',
+                    showSpeedArea: false,
+                });
             }
-        };
+        } catch (error) {
+            console.log("Error fetching data from backend:", error.message);
+        }
+    };
 
-        // Poll the API every 500ms
-        captureInterval.current = setInterval(GetHUDLog, 1500);
+    // Polling
+    captureInterval.current = setInterval(GetHUDLog, 1500);
 
-        return () => clearInterval(captureInterval.current);
-    }, [user.userID]);
+    return () => clearInterval(captureInterval.current);
+}, [user.userID]);
+
+
+
 
     return (
         <View style={styles.container}>
@@ -212,7 +235,7 @@ const ARMode = ({ navigation, route }) => {
 
             {/* Left Mirror Camera*/}
             <View style={styles.leftIndicatorContainer}>
-                {hudState.carOnLeftSideOrRightSide === 'left' && showLeftIndicator && (
+                {hudState.carOnLeftSideOrRightSide === 'right' && showLeftIndicator && (
                     <Image
                         source={require('../Images/left_arrow_updated.png')}
                         style={styles.indicatorImage}
@@ -223,7 +246,7 @@ const ARMode = ({ navigation, route }) => {
 
             {/* Right Mirror Camera*/}
             <View style={styles.rightIndicatorContainer}>
-                {hudState.carOnLeftSideOrRightSide === 'right' && showRightIndicator && (
+                {hudState.carOnLeftSideOrRightSide === 'left' && showRightIndicator && (
                     <Image
                         source={require('../Images/right_arrow_updated.png')}
                         style={styles.indicatorImage}
